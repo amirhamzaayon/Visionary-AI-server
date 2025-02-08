@@ -49,9 +49,9 @@ async function run() {
       const { postTitle, tag } = req.query;
       const filter = {};
       if (postTitle) {
-        filter.postsTitle = { $regex: serviceTitle, $options: "i" };
+        filter.postTitle = { $regex: postTitle, $options: "i" };
       }
-      if (tag && tag !== "All") {
+      if (tag) {
         filter.tag = tag;
       }
       const posts = await PostsInfo.find(filter).toArray();
@@ -62,6 +62,42 @@ async function run() {
     app.get("/categories", async (req, res) => {
       const categories = await PostsInfo.distinct("tag");
       res.send(["All", ...categories]);
+    });
+
+    // fetch api for feature forums
+    app.get("/top-posts", async (req, res) => {
+      try {
+        const topPosts = await PostsInfo.aggregate([
+          {
+            $sort: { totalUpvote: -1 },
+          },
+          {
+            $limit: 5,
+          },
+          {
+            $project: {
+              postID: 1,
+              authorName: 1,
+              postTitle: 1,
+              totalUpvote: 1,
+              totalComments: 1,
+              tag: 1,
+            },
+          },
+        ]).toArray();
+
+        // res.status(200).json({
+        //   success: true,
+        //   count: topPosts.length,
+        //   data: topPosts,
+        // });
+        res.send(topPosts);
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          error: "Server Error: " + error.message,
+        });
+      }
     });
   } finally {
     // Ensures that the client will close when you finish/error
