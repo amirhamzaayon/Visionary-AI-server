@@ -107,6 +107,14 @@ async function run() {
       const result = await PostsInfo.findOne(query);
       res.send(result);
     });
+
+    //get only my posts
+    app.get("/myposts", async (req, res) => {
+      const email = req.query.email;
+      const query = { authorEmail: email };
+      const result = await PostsInfo.find(query).toArray();
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
