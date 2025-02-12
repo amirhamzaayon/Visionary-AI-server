@@ -11,6 +11,7 @@ app.use(
     credentials: true,
   })
 );
+app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.bcwzf.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -38,13 +39,13 @@ async function run() {
     const ReportsInfo = client.db("Visionary-AI").collection("ReportsInfo");
 
     // fetch api for home page post info
-    app.get("/posts", async (req, res) => {
-      const cursor = PostsInfo.find({});
-      const posts = await cursor.toArray();
-      res.send(posts);
-    });
+    // app.get("/posts", async (req, res) => {
+    //   const cursor = PostsInfo.find({});
+    //   const posts = await cursor.toArray();
+    //   res.send(posts);
+    // });
 
-    // fetch api for search results
+    // fetch api for search & filter results for home page post info
     app.get("/search", async (req, res) => {
       const { postTitle, tag } = req.query;
       const filter = {};
@@ -86,11 +87,6 @@ async function run() {
           },
         ]).toArray();
 
-        // res.status(200).json({
-        //   success: true,
-        //   count: topPosts.length,
-        //   data: topPosts,
-        // });
         res.send(topPosts);
       } catch (error) {
         res.status(500).json({
@@ -113,6 +109,13 @@ async function run() {
       const email = req.query.email;
       const query = { authorEmail: email };
       const result = await PostsInfo.find(query).toArray();
+      res.send(result);
+    });
+
+    //post a new post
+    app.post("/newpost", async (req, res) => {
+      const newPost = req.body;
+      const result = await PostsInfo.insertOne(newPost);
       res.send(result);
     });
   } finally {
