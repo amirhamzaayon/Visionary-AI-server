@@ -118,6 +118,37 @@ async function run() {
       const result = await PostsInfo.insertOne(newPost);
       res.send(result);
     });
+
+    //previous update Upvote and downvote
+    app.patch("/postdetails/:id/vote", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const { totalUpvote, totalDownvote } = req.body; // Changed to match client-side case
+
+        console.log("Received data:", req.body); // Add this line for debugging
+
+        const filter = {
+          _id: new ObjectId(id),
+        };
+
+        const update = {
+          $set: {},
+        };
+
+        if (totalUpvote !== undefined) {
+          update.$set.totalUpvote = totalUpvote;
+        }
+        if (totalDownvote !== undefined) {
+          update.$set.totalDownvote = totalDownvote;
+        }
+
+        const result = await PostsInfo.updateOne(filter, update);
+        res.json(result);
+      } catch (error) {
+        console.error("Update error:", error); // Add error logging
+        res.status(500).json({ error: error.message });
+      }
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
