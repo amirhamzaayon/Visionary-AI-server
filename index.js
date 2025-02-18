@@ -149,6 +149,27 @@ async function run() {
         res.status(500).json({ error: error.message });
       }
     });
+
+    //add new comment in post
+    app.post("/postdetails/:id/add-comment", async (req, res) => {
+      const id = req.params.id;
+      const newComment = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const result = await PostsInfo.findOne(filter);
+
+      const updatedComments = [...(result.comments || []), newComment];
+      const updatedCommentsCount = updatedComments.length;
+      const update = await PostsInfo.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            totalComments: updatedCommentsCount,
+            comments: updatedComments,
+          },
+        }
+      );
+      res.send({ message: "Updated comments", update });
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
