@@ -153,7 +153,7 @@ async function run() {
     //add new comment in post
     app.post("/postdetails/:id/add-comment", async (req, res) => {
       const id = req.params.id;
-      const newComment = req.body;
+      const newComment = { commentID: new ObjectId(), ...req.body };
       const filter = { _id: new ObjectId(id) };
       const result = await PostsInfo.findOne(filter);
 
@@ -169,6 +169,31 @@ async function run() {
         }
       );
       res.send({ message: "Updated comments", update });
+    });
+
+    // report a comment of users
+    app.post("/report", async (req, res) => {
+      const reportInfo = req.body;
+      const filter = {
+        "comments.commentID": new ObjectId(reportInfo.commentID),
+      };
+      const result = await PostsInfo.findOne(filter);
+
+      reportInfo.postTitle = result.postTitle;
+      reportInfo.authorName = result.authorName;
+      reportInfo.authorEmail = result.authorEmail;
+      reportInfo.authorProfile = result.authorProfile;
+
+      const update = await ReportsInfo.insertOne(reportInfo);
+      res.send({ message: "Report added successfully", update });
+    });
+
+    //delete a post
+    app.delete("/post/delete/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await PostsInfo.deleteOne(filter);
+      res.send({ message: "Post Deleted successfully", result });
     });
   } finally {
     // Ensures that the client will close when you finish/error
