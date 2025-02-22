@@ -96,7 +96,7 @@ async function run() {
       }
     });
 
-    //get one service details
+    //get one service details page
     app.get("/postdetails/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -104,6 +104,7 @@ async function run() {
       res.send(result);
     });
 
+    //----------------- user dashboard ------------------
     //get only my posts
     app.get("/myposts", async (req, res) => {
       const email = req.query.email;
@@ -194,6 +195,79 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       const result = await PostsInfo.deleteOne(filter);
       res.send({ message: "Post Deleted successfully", result });
+    });
+
+    //----------------- admin dashboard ------------------
+    //get all the users information
+    app.get("/usersInfo", async (req, res) => {
+      const result = await UsersInfo.find({}).toArray();
+      res.send(result);
+    });
+
+    //get all the reports information
+    app.get("/usersReports", async (req, res) => {
+      const result = await ReportsInfo.find({}).toArray();
+      res.send(result);
+    });
+
+    //delete a comment
+    app.delete("/admin/delete-comment/:id", async (req, res) => {
+      const id = req.params.id;
+
+      // First find the post that contains this comment
+      const post = await PostsInfo.findOne({
+        comments: {
+          $elemMatch: { _id: new ObjectId(id) },
+        },
+      });
+
+      if (!post) {
+        return res
+          .status(404)
+          .send({ message: "Post not found containing this comment" });
+      }
+
+      // Remove the comment from the post's comments array
+      const updateResult = await PostsInfo.updateOne(
+        { _id: post._id },
+        { $pull: { comments: { commentID: new ObjectId(id) } } }
+      );
+
+      // Delete the report
+      const reportResult = await ReportsInfo.deleteOne({
+        commentID: id,
+      });
+
+      // Update total comments count
+      await PostsInfo.updateOne(
+        { _id: post._id },
+        { $inc: { totalComments: -1 } }
+      );
+
+      res.send({
+        message: "Comment and report deleted successfully",
+        updateResult,
+        reportResult,
+      });
+    });
+
+    //reject a report
+    app.delete("/admin/reject-comment/:id", async (req, res) => {
+      const id = req.params.id;
+
+      // Delete only the report
+      const result = await ReportsInfo.deleteOne({
+        commentID: id,
+      });
+
+      if (result.deletedCount === 0) {
+        return res.status(404).send({ message: "Report not found" });
+      }
+
+      res.send({
+        message: "Report rejected successfully",
+        result,
+      });
     });
   } finally {
     // Ensures that the client will close when you finish/error
