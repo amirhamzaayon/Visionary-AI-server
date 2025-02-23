@@ -37,6 +37,9 @@ async function run() {
     const PostsInfo = client.db("Visionary-AI").collection("PostsInfo");
     const UsersInfo = client.db("Visionary-AI").collection("UsersInfo");
     const ReportsInfo = client.db("Visionary-AI").collection("ReportsInfo");
+    const AnnouncementInfo = client
+      .db("Visionary-AI")
+      .collection("AnnouncementInfo");
 
     // fetch api for home page post info
     // app.get("/posts", async (req, res) => {
@@ -217,7 +220,7 @@ async function run() {
       // First find the post that contains this comment
       const post = await PostsInfo.findOne({
         comments: {
-          $elemMatch: { _id: new ObjectId(id) },
+          $elemMatch: { commentID: new ObjectId(id) },
         },
       });
 
@@ -268,6 +271,47 @@ async function run() {
         message: "Report rejected successfully",
         result,
       });
+    });
+
+    //make a user admin
+    app.put("/admin/make-admin/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const update = { $set: { userBadge: "Admin", userRole: "Admin" } };
+      const result = await UsersInfo.updateOne(filter, update);
+      res.send({ message: "User is now Admin", result });
+    });
+
+    // get the announcement
+    app.get("/announcement", async (req, res) => {
+      const result = await AnnouncementInfo.find({}).toArray();
+      res.send(result);
+    });
+
+    // add a announcement
+    app.put("/add-announcement", async (req, res) => {
+      try {
+        // Validate that request body contains announcement
+        if (!req.body.announcement) {
+          return res
+            .status(400)
+            .json({ error: "Announcement text is required" });
+        }
+        newAnnouncement = req.body.announcement;
+        console.log(newAnnouncement);
+
+        // Update only the announcement field
+        const result = await AnnouncementInfo.updateOne(
+          {}, // Empty filter to match the single document
+          { $set: { announcement: newAnnouncement } },
+          { upsert: true } // Create if doesn't exist
+        );
+
+        res.json(result);
+      } catch (error) {
+        console.error("Error updating announcement:", error);
+        res.status(500).json({ error: "Failed to update announcement" });
+      }
     });
   } finally {
     // Ensures that the client will close when you finish/error
