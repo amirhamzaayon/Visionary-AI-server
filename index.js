@@ -313,6 +313,23 @@ async function run() {
         res.status(500).json({ error: "Failed to update announcement" });
       }
     });
+
+    // admin and user identification
+    app.get("/usersInfo/:email", async (req, res) => {
+      const userEmail = req.params.email;
+      const query = { userEmail: userEmail };
+      const result = await UsersInfo.findOne(query);
+      res.send(result);
+    });
+
+    // add new users information
+    app.post("/usersInfo", async (req, res) => {
+      const newUserInfo = req.body;
+      console.log(newUserInfo);
+      const result = await UsersInfo.insertOne(newUserInfo);
+      res.send(result);
+      console.log(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
