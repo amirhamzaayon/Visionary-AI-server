@@ -1,13 +1,18 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 5000;
-require("dotenv").config();
+
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: [
+      "http://localhost:5173",
+      "https://visionary-ai-optional.web.app",
+      "https://visionary-ai-optional.firebaseapp.com",
+    ],
     credentials: true,
   })
 );
